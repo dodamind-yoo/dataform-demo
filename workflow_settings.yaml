@@ -1,4 +1,5 @@
-defaultProject: doda-analytics
-defaultDataset: dataform
-defaultAssertionDataset: dataform_assertions
-dataformCoreVersion: 3.0.42
+defaultProjectConfig:
+  defaultSchema: dataform
+  assertionSchema: dataform_assertions
+  database: doda-analytics
+  location: asia-northeast3

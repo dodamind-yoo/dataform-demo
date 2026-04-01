@@ -1,0 +1,7 @@
+config {
+    type: "table",
+    description: "This table will show information about monthly & yearly Premium Plan Subscribers",
+    columns: {
+        user_id: The distinct id number of the user
+    }
+}
