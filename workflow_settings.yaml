@@ -1,5 +1,4 @@
-defaultProjectConfig:
-  defaultSchema: dataform
-  assertionSchema: dataform_assertions
-  database: doda-analytics
-  location: asia-northeast3
+defaultProject: doda-analytics
+defaultDataset: dataform
+defaultLocation: asia-northeast3
+defaultAssertionDataset: dataform_assertions
