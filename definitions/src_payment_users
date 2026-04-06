@@ -1,0 +1,6 @@
+config {
+    type: "declaration",
+    database: "project-dodamind-2",
+    schema: "superset_tables"
+    name: "payment_users",
+}

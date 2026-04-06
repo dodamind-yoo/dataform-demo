@@ -1,7 +1,11 @@
 config {
-    type: "table",
-    description: "This table will show information about monthly & yearly Premium Plan Subscribers",
+    type: "view",
+    description: "Users who are currently on a premium subscription plan",
     columns: {
-        user_id: The distinct id number of the user
+        user_id: "Unique identifier for the user",
+        company_name: "Company name of the user",
+        payment_date: "Last payment date of the user",
+        renewal: "Whether or not the user will be renewing"
     }
 }
+
