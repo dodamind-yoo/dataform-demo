@@ -1,0 +1,37 @@
+config {
+    type: "view",
+    description: "Users who are currently on a premium subscription plan",
+    columns: {
+        user_id: "Unique identifier for the user",
+        company_name: "Company name of the user",
+        last_payment_month: "Last payment month of the user",
+        last_payment_date: "Last payment date of the user",
+        plan: "The subscription plan the user is using",
+        renewal: "Whether or not the user will be renewing",
+    }
+}
+
+SELECT p.user_id,
+u.email,
+s.name,
+s.company_name,
+FORMAT_TIMESTAMP("%Y-%m", p.last_pay) as last_payment_month,
+FORMAT_TIMESTAMP("%Y-%m-%d", p.last_pay) as last_payment_date,
+CASE
+WHEN p.subscription_type = 'm' AND u.plan = 0.5 THEN 'essential(m)'
+WHEN p.subscription_type = 'm' AND u.plan = 1 THEN 'standard(m)'
+WHEN p.subscription_type = 'm' AND u.plan = 2 THEN 'premium(m)'
+WHEN p.subscription_type = 'y' AND u.plan = 0.5 THEN 'essential(y)'
+WHEN p.subscription_type = 'y' AND u.plan = 1 THEN 'standard(y)'
+WHEN p.subscription_type = 'y' AND u.plan = 2 THEN 'premium(y)'
+ELSE 'Update_Needed'
+END AS subscribed_plan,
+CASE
+WHEN next_plan_code = 0 THEN "No"
+ELSE "Yes"
+END AS renewal,
+FROM ${ref("payment_users")} AS p
+LEFT JOIN ${ref("users_data")} as u
+ON p.user_id = u.id
+LEFT JOIN ${ref("signup_forms")} AS s
+ON p.user_id = s.user_id
