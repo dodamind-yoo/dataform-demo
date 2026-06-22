@@ -1,0 +1,170 @@
+config {
+  type: "table",
+  database: "doda-analytics",
+  schema: "bot_data",
+  name: "total_sales_smore_dataform",
+  description: "Pipeline generating total sales data and categorizations for Smore"
+}
+
+WITH sales as (
+  SELECT
+    FORMAT_TIMESTAMP('%Y-%m', created_at) as month,
+    PLAN as plan, payment_type, SUM(amount) as plan_total,
+    COUNT(user_id) AS purchase_user_total 
+  FROM ${ref("src_payment_logs")}
+  WHERE status = 'DONE'
+  GROUP BY 1, 2, 3
+),
+
+sales2 as (
+  SELECT 
+    month,
+    PARSE_DATE('%Y-%m-%d', CONCAT(month, '-01')) as month_date,
+    CASE
+      WHEN plan LIKE '%(m)' THEN '월간 구독'
+      WHEN plan LIKE '%(y)' THEN '연간 구독'
+      WHEN plan = 'enterprise' THEN '카카오뱅크 광고 상품 또는 부가기능'
+      WHEN plan = 'teamplan' THEN '팀플랜(개편전)'
+      WHEN plan = 'up' THEN '업그레이드'
+      ELSE '확인 불가'
+    END AS category,
+    plan,
+    CASE
+      WHEN payment_type = 'up' THEN '업그레이드'
+      WHEN payment_type = 'first' THEN '신규 결제'
+      WHEN payment_type = 'renew' THEN '갱신 결제'
+      WHEN payment_type = 'enterprise' THEN '카카오뱅크 광고 상품 또는 부가기능 단일 결제'
+      WHEN payment_type = 'teamplan' THEN '팀플랜(개편전) 단일 결제'
+      ELSE '확인 불가'
+    END AS subscription_cycle,
+    plan_total,
+    purchase_user_total
+  FROM sales
+),
+
+sales3 as (
+  SELECT 
+    LEFT(month, 4) AS year,
+    month, month_date, category, plan, subscription_cycle,
+    CASE
+      WHEN category = '업그레이드' THEN '업그레이드'
+      WHEN category = '연간 구독' AND plan = 'essential(y)' AND subscription_cycle = '신규 결제' THEN '연간 에센셜 신규 결제'
+      WHEN category = '연간 구독' AND plan = 'essential(y)' AND subscription_cycle = '갱신 결제' THEN '연간 에센셜 갱신 결제'
+      WHEN category = '연간 구독' AND plan = 'standard(y)' AND subscription_cycle = '신규 결제' THEN '연간 스탠다드 신규 결제'
+      WHEN category = '연간 구독' AND plan = 'standard(y)' AND subscription_cycle = '갱신 결제' THEN '연간 스탠다드 갱신 결제'
+      WHEN category = '연간 구독' AND plan = 'premium(y)' AND subscription_cycle = '신규 결제' THEN '연간 프리미엄 신규 결제'
+      WHEN category = '연간 구독' AND plan = 'premium(y)' AND subscription_cycle = '갱신 결제' THEN '연간 프리미엄 갱신 결제'
+      WHEN category = '연간 구독' AND plan = 'Lite(y)' AND subscription_cycle = '신규 결제' THEN '연간 라이트 신규 결제'
+      WHEN category = '연간 구독' AND plan = 'Lite(y)' AND subscription_cycle = '갱신 결제' THEN '연간 라이트 갱신 결제'
+      WHEN category = '연간 구독' AND plan = 'Starter(y)' AND subscription_cycle = '신규 결제' THEN '연간 스타터 신규 결제'
+      WHEN category = '연간 구독' AND plan = 'Starter(y)' AND subscription_cycle = '갱신 결제' THEN '연간 스타터 갱신 결제'
+      WHEN category = '연간 구독' AND plan = 'Growth(y)' AND subscription_cycle = '신규 결제' THEN '연간 그로스 신규 결제'
+      WHEN category = '연간 구독' AND plan = 'Growth(y)' AND subscription_cycle = '갱신 결제' THEN '연간 그로스 갱신 결제'
+      WHEN category = '연간 구독' AND plan = 'Plus(y)' AND subscription_cycle = '신규 결제' THEN '연간 플러스 신규 결제'
+      WHEN category = '연간 구독' AND plan = 'Plus(y)' AND subscription_cycle = '갱신 결제' THEN '연간 플러스 갱신 결제'
+      WHEN category = '월간 구독' AND plan = 'essential(m)' AND subscription_cycle = '신규 결제' THEN '월간 에센셜 신규 결제'
+      WHEN category = '월간 구독' AND plan = 'essential(m)' AND subscription_cycle = '갱신 결제' THEN '월간 에센셜 갱신 결제'
+      WHEN category = '월간 구독' AND plan = 'standard(m)' AND subscription_cycle = '신규 결제' THEN '월간 스탠다드 신규 결제'
+      WHEN category = '월간 구독' AND plan = 'standard(m)' AND subscription_cycle = '갱신 결제' THEN '월간 스탠다드 갱신 결제'
+      WHEN category = '월간 구독' AND plan = 'premium(m)' AND subscription_cycle = '신규 결제' THEN '월간 프리미엄 신규 결제'
+      WHEN category = '월간 구독' AND plan = 'premium(m)' AND subscription_cycle = '갱신 결제' THEN '월간 프리미엄 갱신 결제'
+      WHEN category = '월간 구독' AND plan = 'Lite(m)' AND subscription_cycle = '신규 결제' THEN '월간 라이트 신규 결제'
+      WHEN category = '월간 구독' AND plan = 'Lite(m)' AND subscription_cycle = '갱신 결제' THEN '월간 라이트 갱신 결제'
+      WHEN category = '월간 구독' AND plan = 'Starter(m)' AND subscription_cycle = '신규 결제' THEN '월간 스타터 신규 결제'
+      WHEN category = '월간 구독' AND plan = 'Starter(m)' AND subscription_cycle = '갱신 결제' THEN '월간 스타터 갱신 결제'
+      WHEN category = '월간 구독' AND plan = 'Growth(m)' AND subscription_cycle = '신규 결제' THEN '월간 그로스 신규 결제'
+      WHEN category = '월간 구독' AND plan = 'Growth(m)' AND subscription_cycle = '갱신 결제' THEN '월간 그로스 갱신 결제'
+      WHEN category = '월간 구독' AND plan = 'Plus(m)' AND subscription_cycle = '신규 결제' THEN '월간 플러스 신규 결제'
+      WHEN category = '월간 구독' AND plan = 'Plus(m)' AND subscription_cycle = '갱신 결제' THEN '월간 플러스 갱신 결제'
+      WHEN category = '카카오뱅크 광고 상품 또는 부가기능' THEN '카카오뱅크 광고 상품 또는 부가기능'
+      WHEN category = '팀플랜(개편전)' THEN '팀플랜(개편전) 단일 결제'
+      ELSE '확인 불가'
+    END AS subscription_full_category,
+    plan_total,
+    purchase_user_total
+  FROM sales2
+),
+
+distinct_months AS (
+  SELECT DISTINCT month, month_date FROM sales2
+),
+
+all_categories AS (
+  SELECT '연간 플러스 갱신 결제' AS sub_category, '연간 구독' AS category, 'Plus(y)' AS plan, '갱신 결제' AS subscription_cycle, 1 AS sort_order UNION ALL
+  SELECT '연간 플러스 신규 결제', '연간 구독', 'Plus(y)', '신규 결제', 2 UNION ALL
+  SELECT '연간 그로스 갱신 결제', '연간 구독', 'Growth(y)', '갱신 결제', 3 UNION ALL
+  SELECT '연간 그로스 신규 결제', '연간 구독', 'Growth(y)', '신규 결제', 4 UNION ALL
+  SELECT '연간 스타터 갱신 결제', '연간 구독', 'Starter(y)', '갱신 결제', 5 UNION ALL
+  SELECT '연간 스타터 신규 결제', '연간 구독', 'Starter(y)', '신규 결제', 6 UNION ALL
+  SELECT '연간 라이트 갱신 결제', '연간 구독', 'Lite(y)', '갱신 결제', 7 UNION ALL
+  SELECT '연간 라이트 신규 결제', '연간 구독', 'Lite(y)', '신규 결제', 8 UNION ALL
+  SELECT '연간 프리미엄 갱신 결제', '연간 구독', 'premium(y)', '갱신 결제', 9 UNION ALL
+  SELECT '연간 프리미엄 신규 결제', '연간 구독', 'premium(y)', '신규 결제', 10 UNION ALL
+  SELECT '연간 스탠다드 갱신 결제', '연간 구독', 'standard(y)', '갱신 결제', 11 UNION ALL
+  SELECT '연간 스탠다드 신규 결제', '연간 구독', 'standard(y)', '신규 결제', 12 UNION ALL
+  SELECT '연간 에센셜 갱신 결제', '연간 구독', 'essential(y)', '갱신 결제', 13 UNION ALL
+  SELECT '연간 에센셜 신규 결제', '연간 구독', 'essential(y)', '신규 결제', 14 UNION ALL
+  SELECT '월간 플러스 갱신 결제', '월간 구독', 'Plus(m)', '갱신 결제', 15 UNION ALL
+  SELECT '월간 플러스 신규 결제', '월간 구독', 'Plus(m)', '신규 결제', 16 UNION ALL
+  SELECT '월간 그로스 갱신 결제', '월간 구독', 'Growth(m)', '갱신 결제', 17 UNION ALL
+  SELECT '월간 그로스 신규 결제', '월간 구독', 'Growth(m)', '신규 결제', 18 UNION ALL
+  SELECT '월간 스타터 갱신 결제', '월간 구독', 'Starter(m)', '갱신 결제', 19 UNION ALL
+  SELECT '월간 스타터 신규 결제', '월간 구독', 'Starter(m)', '신규 결제', 20 UNION ALL
+  SELECT '월간 라이트 갱신 결제', '월간 구독', 'Lite(m)', '갱신 결제', 21 UNION ALL
+  SELECT '월간 라이트 신규 결제', '월간 구독', 'Lite(m)', '신규 결제', 22 UNION ALL
+  SELECT '월간 프리미엄 갱신 결제', '월간 구독', 'premium(m)', '갱신 결제', 23 UNION ALL
+  SELECT '월간 프리미엄 신규 결제', '월간 구독', 'premium(m)', '신규 결제', 24 UNION ALL
+  SELECT '월간 스탠다드 갱신 결제', '월간 구독', 'standard(m)', '갱신 결제', 25 UNION ALL
+  SELECT '월간 스탠다드 신규 결제', '월간 구독', 'standard(m)', '신규 결제', 26 UNION ALL
+  SELECT '월간 에센셜 갱신 결제', '월간 구독', 'essential(m)', '갱신 결제', 27 UNION ALL
+  SELECT '월간 에센셜 신규 결제', '월간 구독', 'essential(m)', '신규 결제', 28 UNION ALL
+  SELECT '업그레이드', '업그레이드', 'up', '업그레이드', 29 UNION ALL
+  SELECT '카카오뱅크 광고 상품 또는 부가기능', '카카오뱅크 광고 상품 또는 부가기능', 'enterprise', '카카오뱅크 광고 상품 또는 부가기능 단일 결제', 30 UNION ALL
+  SELECT '팀플랜(개편전) 단일 결제', '팀플랜(개편전)', 'teamplan', '팀플랜(개편전) 단일 결제', 31 UNION ALL
+  SELECT '확인 불가', '확인 불가', '확인 불가', '확인 불가', 32
+),
+
+master_grid AS (
+  SELECT m.month, m.month_date, c.category, c.plan, c.subscription_cycle, c.sub_category, c.sort_order
+  FROM distinct_months m
+  CROSS JOIN all_categories c
+),
+
+final_prep AS (
+  SELECT 
+    LEFT(g.month, 4) AS year,
+    g.month,
+    g.month_date,
+    g.category,              
+    g.plan,                  
+    g.subscription_cycle,    
+    g.sub_category AS subscription_full_category,
+    COALESCE(s.plan_total, 0) AS plan_total,
+    COALESCE(s.purchase_user_total, 0) AS purchase_user_total,
+    g.sort_order
+  FROM master_grid g
+  LEFT JOIN sales3 s 
+    ON g.month = s.month 
+   AND g.sub_category = s.subscription_full_category
+)
+
+SELECT 
+  year,
+  month,
+  month_date,
+  category,
+  plan,
+  subscription_cycle,
+  subscription_full_category,
+  plan_total,
+  purchase_user_total,
+  SUM(plan_total) OVER (PARTITION BY month) AS monthly_total,
+  SUM(purchase_user_total) OVER (PARTITION BY month) AS monthly_purchase_user_total,
+  ROUND(plan_total / NULLIF(SUM(plan_total) OVER (PARTITION BY month), 0), 3) AS monthly_percentage,
+  ROUND(purchase_user_total / NULLIF(SUM(purchase_user_total) OVER (PARTITION BY month), 0), 3) AS monthly_purhcase_user_percentage,
+  sort_order
+FROM final_prep
+ORDER BY
+  1 DESC,
+  2 DESC,
+  sort_order ASC
