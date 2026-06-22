@@ -1,7 +1,7 @@
 config {
   type: "table",
-  database: "doda-analytics",
-  schema: "bot_data",
+  database: "project-dodamind-2",
+  schema: "superset_US",
   name: "total_sales_smore_dataform",
   description: "Pipeline generating total sales data and categorizations for Smore"
 }
