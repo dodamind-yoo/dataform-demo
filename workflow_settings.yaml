@@ -1,4 +1,3 @@
-defaultProject: doda-analytics
-defaultDataset: dataform
-defaultLocation: asia-northeast3
-defaultAssertionDataset: dataform_assertions
+defaultProject: "doda-analytics"
+defaultDataset: "bot_data"
+defaultLocation: "US"

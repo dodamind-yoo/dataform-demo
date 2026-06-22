@@ -1,6 +1,6 @@
 config {
     type: "declaration",
     database: "project-dodamind-2",
-    schema: "superset_tables",
+    schema: "superset_US",
     name: "quiz_contents"
 }

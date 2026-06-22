@@ -11,7 +11,7 @@ WITH sales as (
     FORMAT_TIMESTAMP('%Y-%m', created_at) as month,
     PLAN as plan, payment_type, SUM(amount) as plan_total,
     COUNT(user_id) AS purchase_user_total 
-  FROM ${ref("src_payment_logs")}
+  FROM ${ref("payment_logs")}
   WHERE status = 'DONE'
   GROUP BY 1, 2, 3
 ),
