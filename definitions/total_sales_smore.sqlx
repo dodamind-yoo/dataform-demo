@@ -1,6 +1,6 @@
 config {
   type: "table",
-  tags: ["sales_hourly"],
+  tags: ["sales_daily"],
   database: "project-dodamind-2",
   schema: "superset_US",
   name: "total_sales_smore_dataform",
