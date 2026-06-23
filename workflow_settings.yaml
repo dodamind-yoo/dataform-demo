@@ -1,3 +1,4 @@
+dataformCoreVersion: "3.0.0"
 defaultProject: "doda-analytics"
 defaultDataset: "bot_data"
 defaultLocation: "US"
